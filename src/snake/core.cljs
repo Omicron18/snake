@@ -3,7 +3,7 @@
 (def canvas (.getElementById js/document "canvas"))
 (def ctx (.getContext js/canvas "2d"))
 
-(def state (atom {:x 0, :y 0, :d (list :y inc)}))
+(def state (atom {:snake [{:x 0, :y 0}], :d (list :y inc)}))
 
 (def up (.getElementById js/document "up"))
 (def down (.getElementById js/document "down"))
@@ -15,10 +15,10 @@
     (set! (.-fillStyle ctx) "white")
     (.fillRect ctx (* 10 (:x @state)) (* 10 (:y @state)) 10 10)))
 
-(defn draw []
+(defn draw [x y]
   (do
     (set! (.-fillStyle ctx) "black")
-    (.fillRect ctx (* 10 (:x @state)) (* 10 (:y @state)) 10 10)))
+    (.fillRect ctx (* 10 x) (* 10 y) 10 10)))
 
 (defn mutate [key f]
   (swap! state #(update % key f)))
@@ -38,8 +38,20 @@
 (.addEventListener left "click" leftfn)
 (.addEventListener right "click" rightfn)
 
+;;(defn tick []
+;;  (do (clear)
+;;      (apply mutate (:d @state))
+;;      (draw)))
+
+(defn grow [s]
+  (let [snake (:snake s)]
+    (update s :snake #(conj % (apply update (last %) (:d s))))))
+
 (defn tick []
-  (do (clear) (apply mutate (:d @state)) (draw)))
+  (do ;;(clear)
+      (swap! state grow)
+      (let [tail (last (:snake @state))]
+        (draw (:x tail) (:y tail)))))
 
 (.setInterval js/window
               tick
