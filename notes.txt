@@ -1,0 +1,54 @@
+This project comes from:
+
+https://clojurescript.org/guides/quick-start
+
+in the repl, to add an element, can do:
+
+=> (def a (.getElementById js/document "app"))
+=> (def b (.createElement js/document "p"))
+=> (.appendChild a b)
+
+=> (def f [] (set! (.-textContent b) (+ 1 (int (.-textContent b)))))
+=> (.setInterval js/window f 1000)
+
+(def canvas (.getElementById js/document "canvas"))
+(def ctx (.getContext js/canvas "2d"))
+(set! (.-fillStyle ctx) "black")
+(.fillRect ctx 10 10 20 20)
+           
+(def state (atom {:x 0, :y 0}))
+(swap! state #(update % :x inc))
+
+(def up (.getElementById js/document "up"))
+(def down (.getElementById js/document "down"))
+(def left (.getElementById js/document "left"))
+(def right (.getElementById js/document "right"))
+
+(defn upf [] (swap! state #(update % :y dec)))
+(defn downf [] (swap! state #(update % :y inc)))
+(defn leftf [] (swap! state #(update % :x dec)))
+(defn rightf [] (swap! state #(update % :x inc)))
+
+(defn upfn [] (do (clear) (upf) (draw)))
+(defn downfn [] (do (clear) (downf) (draw)))
+(defn leftfn [] (do (clear) (leftf) (draw)))
+(defn rightfn [] (do (clear) (rightf) (draw)))
+
+(.addEventListener up "click" upfn)
+(.addEventListener down "click" downfn)
+(.addEventListener left "click" leftfn)
+(.addEventListener right "click" rightfn)
+
+
+---
+
+to use in the repl the things defined in core.cljs, you need to do
+=> (ns hello-world.core)
+
+---
+
+(defn draw []
+ (do
+  (set! (.-fillStyle ctx) "black")
+  (.fillRect ctx (:x @state) (:y @state) (+ 10 (:x @state)) (+ 10 (:y @state)))))
+
