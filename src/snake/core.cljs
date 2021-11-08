@@ -10,15 +10,15 @@
 (def left (.getElementById js/document "left"))
 (def right (.getElementById js/document "right"))
 
-(defn clear []
+(defn clear [x y]
   (do
     (set! (.-fillStyle ctx) "white")
-    (.fillRect ctx (* 10 (:x @state)) (* 10 (:y @state)) 10 10)))
+    (.fillRect ctx (* 10 x) (* 10 y) 10 10)))
 
 (defn draw [x y]
   (do
     (set! (.-fillStyle ctx) "black")
-    (.fillRect ctx (* 10 x) (* 10 y) 10 10)))
+    (.fillRect ctx (* 10 x) (* 10 y) 9 9)))
 
 (defn mutate [key f]
   (swap! state #(update % key f)))
@@ -47,14 +47,20 @@
   (let [snake (:snake s)]
     (update s :snake #(conj % (apply update (last %) (:d s))))))
 
+(defn move [s]
+  (update s :snake #(vec (drop 1 (conj % (apply update (last %) (:d s)))))))
+
+
 (defn tick []
   (do ;;(clear)
-      (swap! state grow)
-      (let [tail (last (:snake @state))]
+    (let [head (first (:snake @state))]
+      (clear (:x head) (:y head)))
+    (swap! state move)
+    (let [tail (last (:snake @state))]
         (draw (:x tail) (:y tail)))))
 
-(.setInterval js/window
-              tick
-              1000)
+(swap! state #(assoc % :alive (.setInterval js/window
+                                             tick
+                                             1000)))
 
 
