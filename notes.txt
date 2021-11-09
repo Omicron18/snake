@@ -2,6 +2,11 @@ This project comes from:
 
 https://clojurescript.org/guides/quick-start
 
+# clj -M --main cljs.main --repl-opts "{:launch-browser false}" --compile snake.core --repl
+
+----
+
+
 in the repl, to add an element, can do:
 
 => (def a (.getElementById js/document "app"))
