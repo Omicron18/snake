@@ -15,9 +15,17 @@
     (set! (.-fillStyle ctx) "white")
     (.fillRect ctx (* 10 x) (* 10 y) 10 10)))
 
+(defn clear-all []
+  (doall (for [x (range 30), y (range 30)] (clear x y))))
+
 (defn draw [x y]
   (do
     (set! (.-fillStyle ctx) "black")
+    (.fillRect ctx (* 10 x) (* 10 y) 9 9)))
+
+(defn draw-apple [x y]
+  (do
+    (set! (.-fillStyle ctx) "green")
     (.fillRect ctx (* 10 x) (* 10 y) 9 9)))
 
 (defn mutate [key f]
@@ -47,20 +55,38 @@
   (let [snake (:snake s)]
     (update s :snake #(conj % (apply update (last %) (:d s))))))
 
+(defn eats? [s]
+  (let [head (last (:snake s))]
+    (and (= (:x head) (:x (:apple s)))
+         (= (:y head) (:y (:apple s))))))
+
 (defn move [s]
-  (update s :snake #(vec (drop 1 (conj % (apply update (last %) (:d s)))))))
+  (if (eats? s)
+    (grow s)
+    (update s :snake #(vec (drop 1 (conj % (apply update (last %) (:d s))))))))
 
 
 (defn tick []
   (do ;;(clear)
-    (let [head (first (:snake @state))]
-      (clear (:x head) (:y head)))
+    (if (not (eats? @state))
+      (let [tail (first (:snake @state))]
+        (clear (:x tail) (:y tail))))
     (swap! state move)
-    (let [tail (last (:snake @state))]
-        (draw (:x tail) (:y tail)))))
+    (let [head (last (:snake @state))]
+        (draw (:x head) (:y head)))))
 
-(swap! state #(assoc % :alive (.setInterval js/window
+(defn place-apple []
+  (do
+    (let [x (int (rand 20))
+          y (int (rand 20))]
+      (swap! state #(assoc % :apple {:x x, :y y}))
+      (draw-apple x y))))
+
+
+(defn go! []
+  (swap! state #(assoc % :alive (.setInterval js/window
                                              tick
-                                             1000)))
-
+                                             1000))))
+(defn stop! []
+  (.clearInterval js/window (:alive @state)))
 
