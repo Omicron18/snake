@@ -46,10 +46,24 @@
 (defn leftfn [] (swap! state #(assoc % :d (list :x dec))))
 (defn rightfn [] (swap! state #(assoc % :d (list :x inc))))
 
+(defn toggle-pause []
+  (if (:alive @state)
+    (stop!)
+    (go!)))
+
+(defn keydown [e]
+  (case (.-key e)
+    "ArrowUp" (upfn)
+    "ArrowDown" (downfn)
+    "ArrowLeft" (leftfn)
+    "ArrowRight" (rightfn)
+    "p" (toggle-pause)))
+
 (.addEventListener up "click" upfn)
 (.addEventListener down "click" downfn)
 (.addEventListener left "click" leftfn)
 (.addEventListener right "click" rightfn)
+(.addEventListener js/window "keydown" keydown false)
 
 ;;(defn tick []
 ;;  (do (clear)
@@ -95,5 +109,10 @@
                                              500))))
 
 (defn stop! []
-  (.clearInterval js/window (:alive @state)))
+  (do
+    (.clearInterval js/window
+                    (:alive @state))
+    (swap! state #(dissoc % :alive))))
+
+;;  (.clearInterval js/window (:alive @state)))
 
