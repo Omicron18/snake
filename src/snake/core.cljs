@@ -31,9 +31,6 @@
 
 (defn clear [x y]
   (draw x y "white"))
-;;  (do
-;;    (set! (.-fillStyle ctx) "white")
-;;    (.fillRect ctx (* scaling x) (* scaling y) scaling scaling)))
 
 (defn clear-all []
   (doall (for [x (range size), y (range size)] (clear x y))))
@@ -47,7 +44,7 @@
 (defn rightfn [] (swap! state #(assoc % :d (list :x inc))))
 
 (defn toggle-pause []
-  (if (:alive @state)
+  (if (:ticker @state)
     (stop!)
     (go!)))
 
@@ -104,15 +101,16 @@
       (draw-apple x y))))
 
 (defn go! []
-  (swap! state #(assoc % :alive (.setInterval js/window
-                                             tick
-                                             500))))
+  (let [t (.setInterval js/window
+                        tick
+                        500)]
+    (swap! state #(assoc % :ticker t))))
 
 (defn stop! []
   (do
     (.clearInterval js/window
-                    (:alive @state))
-    (swap! state #(dissoc % :alive))))
+                    (:ticker @state))
+    (swap! state #(dissoc % :ticker))))
 
 ;;  (.clearInterval js/window (:alive @state)))
 
