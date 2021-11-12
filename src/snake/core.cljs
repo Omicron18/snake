@@ -8,7 +8,9 @@
 
 (.strokeRect ctx 0 0 (inc (* size scaling)) (inc (* size scaling)))
 
-(def state (atom {:snake [{:x 0, :y 0}], :d (list :y inc)}))
+(def state (atom {:snake [{:x 0, :y 0}],
+                  :d (list :y inc),
+                  :alive true}))
 
 (def up (.getElementById js/document "up"))
 (def down (.getElementById js/document "down"))
@@ -76,22 +78,32 @@
     (and (= (:x head) (:x (:apple s)))
          (= (:y head) (:y (:apple s))))))
 
+(defn dies? [next s]
+  (or (< (:x next) 0)
+      (>= (:x next) size)
+      (< (:y next) 0)
+      (>= (:y next) size)
+      ))
+
 (defn move [s]
   (let [next (apply update (last (:snake s)) (:d s))]
-    (if (and (= (:x next) (:x (:apple s)))
-             (= (:y next) (:y (:apple s))))
-      (update s :snake #(conj % next))
-      (update s :snake #(vec (drop 1 (conj % next)))))))
+    (if (dies? next s)
+      (assoc s :alive false)
+      (if (and (= (:x next) (:x (:apple s)))
+               (= (:y next) (:y (:apple s))))
+        (update s :snake #(conj % next))
+        (update s :snake #(vec (drop 1 (conj % next))))))))
 
 (defn tick []
-  (do ;;(clear)
-    (let [tail (first (:snake @state))]
-      (swap! state move)
-      (if (eats? @state)
-        (place-apple)
-        (clear (:x tail) (:y tail))))
-    (let [head (last (:snake @state))]
-        (draw (:x head) (:y head)))))
+  (if (:alive @state)
+    (do ;;(clear)
+      (let [tail (first (:snake @state))]
+        (swap! state move)
+        (if (eats? @state)
+          (place-apple)
+          (clear (:x tail) (:y tail))))
+      (let [head (last (:snake @state))]
+        (draw (:x head) (:y head))))))
 
 (defn place-apple []
   (do
