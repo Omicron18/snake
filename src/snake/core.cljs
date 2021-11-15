@@ -8,15 +8,17 @@
 
 (.strokeRect ctx 0 0 (inc (* size scaling)) (inc (* size scaling)))
 
-(def state (atom {:snake [{:x 0, :y 0}],
+(def state (atom {:snake [{:x 0, :y -1}],
                   :d (list :y inc),
-                  :alive true}))
+                  :alive true
+                  :score -1}))
 
 (def up (.getElementById js/document "up"))
 (def down (.getElementById js/document "down"))
 (def left (.getElementById js/document "left"))
 (def right (.getElementById js/document "right"))
 
+(def score-elt (.getElementById js/document "score-elt"))
 (def alive-status (.createElement js/document "p"))
 (.appendChild (.-body js/document) alive-status)
 
@@ -79,9 +81,11 @@
 (defn place-apple []
   (do
     (let [a (some
-             (fn [e] (some #{e} (:snake @state)) false e)
+             (fn [e] (if (some #{e} (:snake @state)) false e))
              (repeatedly
               (fn [] {:x (rand-int size), :y (rand-int size)})))]
+      (swap! state #(update % :score inc))
+      (set! (.-textContent score-elt) (apply str "Score: " (str (:score @state))))
       (swap! state #(assoc % :apple a))
       (draw-apple (:x a) (:y a)))))
 
@@ -112,9 +116,10 @@
     (set! (.-textContent alive-status) "")
     (stop!)
     (.remove new-game-button)
-    (reset! state {:snake [{:x 0, :y 0}],
+    (reset! state {:snake [{:x 0, :y -1}],
                    :d (list :y inc),
-                   :alive true})
+                   :alive true
+                   :score -1})
     (place-apple)
     (go!)))
 
