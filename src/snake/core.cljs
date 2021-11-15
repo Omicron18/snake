@@ -17,6 +17,15 @@
 (def left (.getElementById js/document "left"))
 (def right (.getElementById js/document "right"))
 
+(def alive-status (.createElement js/document "p"))
+(.appendChild (.-body js/document) alive-status)
+
+(def new-game-button (.createElement js/document "button"))
+(set! (.-textContent new-game-button) "play again")
+
+(defn die []
+    (set! (.-textContent alive-status) "you lose!"))
+
 (defn draw
   ([x y colour]
    (do
@@ -45,25 +54,6 @@
 (defn leftfn [] (swap! state #(assoc % :d (list :x dec))))
 (defn rightfn [] (swap! state #(assoc % :d (list :x inc))))
 
-(defn toggle-pause []
-  (if (:ticker @state)
-    (stop!)
-    (go!)))
-
-(defn keydown [e]
-  (case (.-key e)
-    "ArrowUp" (upfn)
-    "ArrowDown" (downfn)
-    "ArrowLeft" (leftfn)
-    "ArrowRight" (rightfn)
-    "p" (toggle-pause)))
-
-(.addEventListener up "click" upfn)
-(.addEventListener down "click" downfn)
-(.addEventListener left "click" leftfn)
-(.addEventListener right "click" rightfn)
-(.addEventListener js/window "keydown" keydown false)
-
 ;;(defn tick []
 ;;  (do (clear)
 ;;      (apply mutate (:d @state))
@@ -83,7 +73,17 @@
       (>= (:x next) size)
       (< (:y next) 0)
       (>= (:y next) size)
+      (some #{next} (:snake s))
       ))
+
+(defn place-apple []
+  (do
+    (let [a (some
+             (fn [e] (some #{e} (:snake @state)) false e)
+             (repeatedly
+              (fn [] {:x (rand-int size), :y (rand-int size)})))]
+      (swap! state #(assoc % :apple a))
+      (draw-apple (:x a) (:y a)))))
 
 (defn move [s]
   (let [next (apply update (last (:snake s)) (:d s))]
@@ -93,24 +93,6 @@
                (= (:y next) (:y (:apple s))))
         (update s :snake #(conj % next))
         (update s :snake #(vec (drop 1 (conj % next))))))))
-
-(defn tick []
-  (if (:alive @state)
-    (do ;;(clear)
-      (let [tail (first (:snake @state))]
-        (swap! state move)
-        (if (eats? @state)
-          (place-apple)
-          (clear (:x tail) (:y tail))))
-      (let [head (last (:snake @state))]
-        (draw (:x head) (:y head))))))
-
-(defn place-apple []
-  (do
-    (let [x (int (rand size))
-          y (int (rand size))]
-      (swap! state #(assoc % :apple {:x x, :y y}))
-      (draw-apple x y))))
 
 (defn go! []
   (let [t (.setInterval js/window
@@ -124,5 +106,58 @@
                     (:ticker @state))
     (swap! state #(dissoc % :ticker))))
 
+(defn reset-game! []
+  (do
+    (clear-all)
+    (set! (.-textContent alive-status) "")
+    (stop!)
+    (.remove new-game-button)
+    (reset! state {:snake [{:x 0, :y 0}],
+                   :d (list :y inc),
+                   :alive true})
+    (place-apple)
+    (go!)))
+
+(defn tick []
+  (if (:alive @state)
+    (do ;;(clear)
+      (let [tail (first (:snake @state))]
+        (swap! state move)
+        (if (eats? @state)
+          (place-apple)
+          (clear (:x tail) (:y tail))))
+      (let [head (last (:snake @state))]
+        (draw (:x head) (:y head))))
+    (do
+      (stop!)
+      (.appendChild (.-body js/document) new-game-button)
+      (.addEventListener new-game-button "click" reset-game!)
+      (die))
+    ))
+
+(defn toggle-pause []
+  (if (:ticker @state)
+    (stop!)
+    (go!)))
+
+(defn keydown [e]
+  (case (.-key e)
+    "ArrowUp" (upfn)
+    "ArrowDown" (downfn)
+    "ArrowLeft" (leftfn)
+    "ArrowRight" (rightfn)
+    "p" (toggle-pause)))
+
+(.addEventListener up "click" upfn)
+(.addEventListener down "click" downfn)
+(.addEventListener left "click" leftfn)
+(.addEventListener right "click" rightfn)
+(.addEventListener js/window "keydown" keydown false)
+
+
+(.addEventListener new-game-button "click" reset-game!)
+
+(place-apple)
+(go!)
 ;;  (.clearInterval js/window (:alive @state)))
 
