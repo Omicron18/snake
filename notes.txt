@@ -16,3 +16,9 @@ to use in the repl the things defined in core.cljs, you need to do
 
 ---
 
+TODO: move to figwheel;
+ cider to get repl in emacs
+
+---
+now with figwheel for reloading: launch with:
+# clj -M --main figwheel.main --repl-opts "{:launch-browser false}" --compile snake.core --repl

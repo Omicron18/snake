@@ -19,6 +19,7 @@
 (def right (.getElementById js/document "right"))
 
 (def score-elt (.getElementById js/document "score-elt"))
+(def pause-button (.getElementById js/document "pause-button"))
 (def alive-status (.createElement js/document "p"))
 (.appendChild (.-body js/document) alive-status)
 
@@ -87,7 +88,10 @@
       (swap! state #(update % :score inc))
       (set! (.-textContent score-elt) (apply str "Score: " (str (:score @state))))
       (swap! state #(assoc % :apple a))
-      (draw-apple (:x a) (:y a)))))
+      (draw-apple (:x a) (:y a)))
+    (stop!)
+    (go!)
+    ))
 
 (defn move [s]
   (let [next (apply update (last (:snake s)) (:d s))]
@@ -98,30 +102,11 @@
         (update s :snake #(conj % next))
         (update s :snake #(vec (drop 1 (conj % next))))))))
 
-(defn go! []
-  (let [t (.setInterval js/window
-                        tick
-                        500)]
-    (swap! state #(assoc % :ticker t))))
-
 (defn stop! []
   (do
     (.clearInterval js/window
                     (:ticker @state))
     (swap! state #(dissoc % :ticker))))
-
-(defn reset-game! []
-  (do
-    (clear-all)
-    (set! (.-textContent alive-status) "")
-    (stop!)
-    (.remove new-game-button)
-    (reset! state {:snake [{:x 0, :y -1}],
-                   :d (list :y inc),
-                   :alive true
-                   :score -1})
-    (place-apple)
-    (go!)))
 
 (defn tick []
   (if (:alive @state)
@@ -138,6 +123,28 @@
       (.appendChild (.-body js/document) new-game-button)
       (.addEventListener new-game-button "click" reset-game!)
       (die))
+    ))
+
+(defn go! []
+  (let [interval (* 500 (Math/pow 0.95 (:score @state)))
+        t (.setInterval js/window
+                        tick
+                        interval)]
+;;                        200)]
+    (println interval)
+    (swap! state #(assoc % :ticker t))))
+
+(defn reset-game! []
+  (do
+    (clear-all)
+    (set! (.-textContent alive-status) "")
+    (stop!)
+    (.remove new-game-button)
+    (reset! state {:snake [{:x 0, :y -1}],
+                   :d (list :y inc),
+                   :alive true
+                   :score -1})
+    (place-apple)
     ))
 
 (defn toggle-pause []
@@ -162,7 +169,8 @@
 
 (.addEventListener new-game-button "click" reset-game!)
 
+(.addEventListener pause-button "click" toggle-pause)
+
 (place-apple)
-(go!)
 ;;  (.clearInterval js/window (:alive @state)))
 
