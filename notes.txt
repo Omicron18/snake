@@ -1,3 +1,9 @@
+
+
+compiled code at https://github.com/Omicron18/Omicron18.github.io/blob/master/snake/main.js;
+play at https://omicron18.github.io/snake/ 
+
+
 This project based on:
 
 https://clojurescript.org/guides/quick-start
